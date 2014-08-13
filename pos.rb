@@ -6,6 +6,10 @@ require './lib/transaction'
 require './lib/purchase'
 require './lib/item'
 
+database_configurations = YAML::load(File.open('./db/config.yml'))
+development_configuration = database_configurations['development']
+ActiveRecord::Base.establish_connection(development_configuration)
+
 def header
   system 'clear'
   puts "$$==POINT OF SALE==$$"
@@ -34,20 +38,54 @@ def main_menu
   end
 end
 
-def login
-  puts "Please type in user name:"
-  name = gets_check('Clerk', name:)
-  puts "Please type in password:"
-  puts = gets_check('Clerk', password:)
+def new_user
+  puts "Enter a name for the new user:"
+  name = gets.chomp
+  puts "Enter a password for this user:"
+  password = gets.chomp
+  Clerk.create(name: name, password: password)
+  puts "New user '#{name}' created!"
+  sleep (0.7)
+  main_menu
 end
 
-def gets_check(klass,attribute)
+
+
+def login
+  puts "Please type in user name:"
+  name = name_check('Clerk')
+  puts "Please type in password:"
+  password_check(name, gets.chomp)
+  clerk_menu
+end
+
+def name_check(klass)
   input = gets.chomp
-  result = Object.const_get(class_name).find_by(attribute input)
+  result = Object.const_get(klass).find_by(name: input)
   if result == nil
     invalid
     main_menu
   end
+  input
+end
+
+def password_check(name,password)
+  user = Clerk.find_by(name: name)
+  if password == user.password
+    puts "Welcome #{name}!"
+  else
+    puts "!!INTRUDER DETECTED!!"
+    sleep(0.7)
+    main_menu
+  end
+end
+
+def clerk_menu
+  header
+
+
+
+
 end
 
 
