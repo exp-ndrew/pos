@@ -96,6 +96,8 @@ def clerk_menu
   puts "4 > Edit"
   puts "--Cart--"
   puts "5 > Add to Cart"
+  puts "6 > Remove from Cart"
+  puts "7 > View Cart"
   puts ""
   puts "X > Logout #{@clerk.name}"
   input = gets.chomp.downcase
@@ -108,11 +110,23 @@ def clerk_menu
   when '2'
     add_product
   when '3'
-    remove_product
+    list('Item')
+    remove_product('Item')
   when '4'
     edit_product
   when '5'
     add_to_cart
+  when '6'
+    view_cart
+    remove_from_cart
+    clerk_menu
+  when '7'
+    view_cart
+    puts "[Hit 'enter' to continue]"
+    gets.chomp
+    clerk_menu
+  when '8'
+    check_out
   when 'x'
     main_menu
   end
@@ -136,10 +150,9 @@ def add_product
   clerk_menu
 end
 
-def remove_product
-  item_list('Item')
+def remove_product(klass)
   puts "Enter the name of the product you wish to remove:"
-  product = name_check('Item')
+  product = name_check(klass)
   puts "#{product.name} was OBLITERATED!!"
   product.destroy
   wait
@@ -202,7 +215,6 @@ def list(klass)
 end
 
 def add_to_cart
-
   list('Item')
   puts ""
   grammar = ''
@@ -219,6 +231,43 @@ def add_to_cart
   wait
   clerk_menu
 end
+
+def view_cart
+  in_cart = []
+  Purchase.all.each do |purchase|
+    item = Item.find_by(id: purchase.item_id)
+    in_cart << [item.name,item.price,purchase.quantity]
+  end
+  in_cart.each do |item|
+    puts ""
+    item.each do |attribute|
+      print "#{attribute} "
+    end
+  end
+  puts ""
+  puts "------------------"
+end
+
+def remove_from_cart
+  puts "Enter the name of the product to remove:"
+  item = name_check('Item')
+  if Purchase.all.include?(item.id)
+
+    Purchase.all.each do |purchase|
+      if item.id == purchase.item_id
+        puts "#{item.name} has been removed from your cart!"
+        purchase.destroy
+        wait
+        clerk_menu
+      end
+    end
+  else
+    puts "That item is not in your cart <__<"
+    wait
+    remove_from_cart
+  end
+end
+
 
 
 main_menu
