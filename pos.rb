@@ -28,6 +28,7 @@ end
 
 def main_menu
   header
+  @clerk = nil
   puts "1 > Login"
   puts "2 > Create new user"
   input = gets.chomp
@@ -37,6 +38,7 @@ def main_menu
   when '2'
     new_user
   when '/'
+    @clerk = Clerk.new(name: 'cheater')
     clerk_menu
   else
     invalid
@@ -57,9 +59,9 @@ end
 
 def login
   puts "Please type in user name:"
-  name = name_check('Clerk').name
+  @clerk = name_check('Clerk')
   puts "Please type in password:"
-  password_check(name, gets.chomp)
+  password_check(@clerk.name, gets.chomp)
   clerk_menu
 end
 
@@ -87,14 +89,19 @@ end
 
 def clerk_menu
   header
-  puts "1 > List Products"
-  puts "2 > Add New Product"
-  puts "3 > Remove Product"
-  puts "4 > Edit Product"
-  input = gets.chomp
+  puts "--Inventory--"
+  puts "1 > List"
+  puts "2 > Add"
+  puts "3 > Remove"
+  puts "4 > Edit"
+  puts "--Cart--"
+  puts "5 > Add to Cart"
+  puts ""
+  puts "X > Logout #{@clerk.name}"
+  input = gets.chomp.downcase
   case input
   when '1'
-    list('Item')
+    item_list('Item')
     puts "[Hit 'enter' to continue]"
     gets.chomp
     clerk_menu
@@ -104,6 +111,10 @@ def clerk_menu
     remove_product
   when '4'
     edit_product
+  when '5'
+    add_to_cart
+  when 'x'
+    main_menu
   end
 end
 
@@ -126,7 +137,7 @@ def add_product
 end
 
 def remove_product
-  list('Item')
+  item_list('Item')
   puts "Enter the name of the product you wish to remove:"
   product = name_check('Item')
   puts "#{product.name} was OBLITERATED!!"
@@ -136,17 +147,16 @@ def remove_product
 end
 
 def edit_product
-  list('Item')
+  item_list('Item')
   puts 'Enter the name of the product to edit:'
   item = name_check('Item')
-  selection = nil
-  until selection == '4'
-  puts ""
-  puts "--Editing #{item.name}--"
-  puts "1 > Change Name"
-  puts "2 > Change Price"
-  puts "3 > Change Quantity"
-  puts "4 > Return to Clerk Menu"
+  loop do
+    puts ""
+    puts "--Editing #{item.name}--"
+    puts "1 > Change Name"
+    puts "2 > Change Price"
+    puts "3 > Change Quantity"
+    puts "4 > Return to Clerk Menu"
     selection = gets.chomp
     case selection
     when '1'
@@ -155,16 +165,18 @@ def edit_product
       edit(item,'price')
     when '3'
       edit(item,'quantity')
+    when '4'
+      clerk_menu
     else
       invalid
       edit_product
     end
   end
-  clerk_menu
 end
 
-def list(klass)
-  puts "#{klass.capitalize} List:"
+
+def item_list(klass)
+  puts "#{klass.capitalize} item_list:"
   puts "------------------"
   Object.const_get(klass).all.each do |object|
     puts "#{object.name}"
@@ -180,5 +192,33 @@ def edit(item, attribute)
   puts "#{item.name} changed to #{change}!"
   result = item.update(attribute.to_sym => change)
 end
+
+def list(klass)
+  puts ""
+  puts "#{klass} list:"
+  Object.const_get(klass).all.each do |item|
+    puts "#{item.name}"
+  end
+end
+
+def add_to_cart
+
+  list('Item')
+  puts ""
+  grammar = ''
+  puts "Enter item name:"
+  input = gets.chomp
+  puts "Enter quantity:"
+  quantity_input = gets.chomp
+  if quantity_input.to_i > 1
+    grammar = "s"
+  end
+  item = Item.find_by(name: input)
+  Purchase.create(item_id: item.id, quantity: quantity_input)
+  puts "Added #{quantity_input} #{item.name}#{grammar} to cart!"
+  wait
+  clerk_menu
+end
+
 
 main_menu
