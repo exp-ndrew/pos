@@ -36,6 +36,8 @@ def main_menu
     login
   when '2'
     new_user
+  when '/'
+    clerk_menu
   else
     invalid
     main_menu
@@ -85,14 +87,23 @@ end
 
 def clerk_menu
   header
-  puts "1 > Add New Product"
-  puts "2 > Remove Product"
+  puts "1 > List Products"
+  puts "2 > Add New Product"
+  puts "3 > Remove Product"
+  puts "4 > Edit Product"
   input = gets.chomp
   case input
   when '1'
-    add_product
+    list('Item')
+    puts "[Hit 'enter' to continue]"
+    gets.chomp
+    clerk_menu
   when '2'
+    add_product
+  when '3'
     remove_product
+  when '4'
+    edit_product
   end
 end
 
@@ -101,8 +112,15 @@ def add_product
   name = gets.chomp
   puts "Enter the price per unit: (e.g. 1.50)"
   price = gets.chomp
-  Item.create(name: name, price: price)
-  puts "#{name} was added to the item table!"
+  puts "Enter the quantity to add to the stock:"
+  quantity = gets.chomp
+  grammar = ' was'
+  if quantity.to_i > 1
+    grammar = "s were"
+  end
+  Item.create(name: name, price: price, quantity: quantity)
+  puts "#{quantity} #{name}#{grammar} added to the inventory!"
+  wait
   wait
   clerk_menu
 end
@@ -113,13 +131,54 @@ def remove_product
   product = name_check('Item')
   puts "#{product.name} was OBLITERATED!!"
   product.destroy
+  wait
+  clerk_menu
+end
+
+def edit_product
+  list('Item')
+  puts 'Enter the name of the product to edit:'
+  item = name_check('Item')
+  selection = nil
+  until selection == '4'
+  puts ""
+  puts "--Editing #{item.name}--"
+  puts "1 > Change Name"
+  puts "2 > Change Price"
+  puts "3 > Change Quantity"
+  puts "4 > Return to Clerk Menu"
+    selection = gets.chomp
+    case selection
+    when '1'
+      edit(item,'name')
+    when '2'
+      edit(item,'price')
+    when '3'
+      edit(item,'quantity')
+    else
+      invalid
+      edit_product
+    end
+  end
+  clerk_menu
 end
 
 def list(klass)
   puts "#{klass.capitalize} List:"
   puts "------------------"
-  Object.const_get(klass).all.each { |object| puts object.name }
+  Object.const_get(klass).all.each do |object|
+    puts "#{object.name}"
+    puts "   - $#{sprintf "%.2f", object.price}"
+    puts "   - Quantity: #{object.quantity}"
+  end
   puts "------------------"
+end
+
+def edit(item, attribute)
+  puts "Enter new #{attribute}:"
+  change = gets.chomp
+  puts "#{item.name} changed to #{change}!"
+  result = item.update(attribute.to_sym => change)
 end
 
 main_menu
