@@ -82,11 +82,23 @@ end
 
 def clerk_menu
   header
-
-
-
-
+  puts "1 > Add New Product "
+  input = gets.chomp
+  case input
+  when '1'
+    add_product
+  end
 end
 
+def add_product
+  puts "Enter the name of the new product:"
+  name = gets.chomp
+  puts "Enter the price per unit: (e.g. 1.50)"
+  price = gets.chomp
+  Item.create(name: name, price: price)
+  puts "#{name} was added to the item table!"
+  sleep(0.7)
+  clerk_menu
+end
 
 main_menu
